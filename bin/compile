@@ -19,6 +19,8 @@ $BUILDPACK_DIR/bin/finalize "$BUILD_DIR" "$CACHE_DIR" "$DEPS_DIR" 0
 ####### BEGIN CHROME HEADLESS ###############
 #############################################
 
+echo "~~~~~~~~~~~ BEGIN CHROME HEADLESS ~~~~~~~~~~~~~~~~~~~~~~~~"
+
 
 ENV_DIR=$3
 
@@ -97,6 +99,8 @@ export | grep -E -e ' (LD_LIBRARY_PATH|LIBRARY_PATH|INCLUDE_PATH|CPATH|CPPPATH|P
 
 topic "Rewrite package-config files"
 find $BUILD_DIR/.apt -type f -ipath '*/pkgconfig/*.pc' | xargs --no-run-if-empty -n 1 sed -i -e 's!^prefix=\(.*\)$!prefix='"$BUILD_DIR"'/.apt\1!g'
+
+echo "~~~~~~~~~~~ BEGIN CHROME HEADLESS ~~~~~~~~~~~~~~~~~~~~~~~~"
 
 
 
