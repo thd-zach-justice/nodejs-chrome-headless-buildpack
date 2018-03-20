@@ -10,8 +10,8 @@ mkdir -p "$BUILD_DIR/.profile.d"
 echo "export DEPS_DIR=\$HOME/.cloudfoundry" > "$BUILD_DIR/.profile.d/0000_set-deps-dir.sh"
 
 
-echo "~~~~~~~~~~~~~~~~VERSION 5~~~~~~~~~~~~~~~~~~~~~~~~"
-
+$BUILDPACK_DIR/bin/supply "$BUILD_DIR" "$CACHE_DIR" "$DEPS_DIR" 0
+$BUILDPACK_DIR/bin/finalize "$BUILD_DIR" "$CACHE_DIR" "$DEPS_DIR" 0
 
 
 
@@ -103,11 +103,3 @@ find $BUILD_DIR/.apt -type f -ipath '*/pkgconfig/*.pc' | xargs --no-run-if-empty
 #############################################
 ####### BEGIN CHROME HEADLESS ###############
 #############################################
-
-
-
-
-
-
-$BUILDPACK_DIR/bin/supply "$BUILD_DIR" "$CACHE_DIR" "$DEPS_DIR" 0
-$BUILDPACK_DIR/bin/finalize "$BUILD_DIR" "$CACHE_DIR" "$DEPS_DIR" 0
