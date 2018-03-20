@@ -24,7 +24,6 @@ LP_DIR=`cd $(dirname $0); cd ..; pwd`
 
 function error() {
   echo " !     $*" >&2
-  exit 1
 }
 
 function topic() {
@@ -38,6 +37,14 @@ function indent() {
     *)      sed -u "$c";;
   esac
 }
+
+stack=${STACK:-heroku-16}
+if [ "${stack,,}" != "cedar-14" ]; then
+  error "The Google Chrome Xvfb buildpack is only supported on Cedar-14."
+  error "For more details see:"
+  error "https://devcenter.heroku.com/articles/heroku-ci#known-issues"
+  exit 1
+fi
 
 # Detect requested channel or default to stable
 if [ -f $ENV_DIR/GOOGLE_CHROME_CHANNEL ]; then
@@ -62,26 +69,13 @@ case "$channel" in
     ;;
   *)
     error "GOOGLE_CHROME_CHANNEL must be 'stable', 'beta', or 'unstable', not '$channel'."
+    exit 1
     ;;
-esac
-
-stack=${STACK:-heroku-16}
-
-# Install correct dependencies according to $STACK
-case "$stack" in
-  "cedar-14")
-    PACKAGES="libxss1"
-    ;;
-  "heroku-16")
-    PACKAGES="libxss1 libx11-xcb1 libxcomposite1 libxcursor1 libxdamage1 libxfixes3 libxi6 libxtst6 libnss3 libgconf-2-4 libxrandr2 libasound2 libatk1.0-0 libgtk2.0-0 libgtk-3-0 libxinerama1 libcairo-gobject2"
-    ;;
-  *)
-    error "STACK must be 'cedar-14' or 'heroku-16', not '$stack.'"
 esac
 
 indent "Installing Google Chrome from the $channel channel."
 
-PACKAGES="$PACKAGES https://dl.google.com/linux/direct/google-chrome-${channel}_current_amd64.deb"
+PACKAGES="https://dl.google.com/linux/direct/google-chrome-${channel}_current_amd64.deb libxss1 libnss3 xvfb"
 
 APT_CACHE_DIR="$CACHE_DIR/apt/cache"
 APT_STATE_DIR="$CACHE_DIR/apt/state"
@@ -140,14 +134,27 @@ export | grep -E -e ' (PATH|LD_LIBRARY_PATH|LIBRARY_PATH|INCLUDE_PATH|CPATH|CPPP
 topic "Rewrite package-config files"
 find $BUILD_DIR/.apt -type f -ipath '*/pkgconfig/*.pc' | xargs --no-run-if-empty -n 1 sed -i -e 's!^prefix=\(.*\)$!prefix='"$BUILD_DIR"'/.apt\1!g'
 
-topic "Creating google-chrome shims"
+topic "Configuring Xvfb for apt"
+# Freedom patch Xvfb to use /app/.. paths instead of hardcoded wrong values
+sed -i s:/usr/bin:/app/nib: "$BUILD_DIR/.apt/usr/bin/Xvfb"
+# create symlinks for Xvfb to use /app/.apt/usr/...
+ln -s /app/.apt/usr/bin $BUILD_DIR/nib
 
+topic "Setting up Xvfb display"
+# Start an Xvfb display in the background at startup, and export the display
+# number so that chrome will use it
+cat <<EOF >$BUILD_DIR/.profile.d/010_xvfb.sh
+Xvfb :42 </dev/null &> /dev/null &
+export DISPLAY=:42
+EOF
+
+topic "Creating google-chrome shims"
 BIN_DIR=$BUILD_DIR/.apt/usr/bin
 
 rm $BIN_DIR/$SHIM
 cat <<EOF >$BIN_DIR/$SHIM
 #!/usr/bin/env bash
-exec \$HOME/.apt/opt/google/$BIN --headless --no-sandbox --disable-gpu --remote-debugging-port=9222 \$@
+exec \$HOME/.apt/opt/google/$BIN --disable-gpu --no-sandbox \$@
 EOF
 chmod +x $BIN_DIR/$SHIM
 cp $BIN_DIR/$SHIM $BIN_DIR/google-chrome
