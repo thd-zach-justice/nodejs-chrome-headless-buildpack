@@ -10,6 +10,8 @@ mkdir -p "$BUILD_DIR/.profile.d"
 echo "export DEPS_DIR=\$HOME/.cloudfoundry" > "$BUILD_DIR/.profile.d/0000_set-deps-dir.sh"
 
 
+echo "~~~~~~~~~~~~~~~~VERSION 5~~~~~~~~~~~~~~~~~~~~~~~~"
+
 
 
 
