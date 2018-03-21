@@ -12,15 +12,9 @@ include_files:
 - PULL_REQUEST_TEMPLATE
 - README.md
 - VERSION
-- bin/compile
 - bin/detect
-- bin/finalize
-- bin/release
 - bin/supply
 - manifest.yml
-- profile/appdynamics-setup.rb
-- profile/newrelic-setup.sh
-- profile/nodejs.sh
 dependency_deprecation_dates:
 - version_line: 4.x
   name: node
@@ -93,4 +87,3 @@ dependencies:
   sha256: 3f03c73ad006b99676ed280e7ef29192f9d0fd316125b959c211cedd13a3291a
   cf_stacks:
   - cflinuxfs2
-pre_package: scripts/build.sh
